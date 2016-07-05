@@ -32,13 +32,13 @@ FEmrt <- function(formula, vi, data, c = 1) {
   #
   # Returns:
   # a list contains the pruned tree, and the resutls of subgroup meta-analysis
-  vi = "vi"
   mf <- match.call()
   mf.vi <- mf[[match("vi", names(mf))]]
   vi <- eval(mf.vi, data, enclos = sys.frame(sys.parent()))
+  assign("vi", vi, envir = .GlobalEnv)
   formula <- as.formula(formula)
   data <- as.data.frame(data)
-  tree <- rpart(formula, data, weights = 1/vi)
+  tree <- rpart(formula, weights = 1/vi, data = data)
   prunedtree <- treepruner(tree, c*sqrt(mean(1/vi)))
 
   if (length(unique(prunedtree$where)) < 2) {
@@ -54,9 +54,10 @@ FEmrt <- function(formula, vi, data, c = 1) {
     pval <- pnorm(abs(zval),lower.tail=FALSE)*2
     ci.lb <- g - qnorm(0.975)*se
     ci.ub <- g + qnorm(0.975)*se
+
     res <- list(tree =  prunedtree, no. = no. ,  Q = Q,
                 df = df, pval.Q = pval.Q, g = g, se = se, zval = zval,
-                pval = pval, ci.lb = ci.lb, ci.ub = ci.ub)
+                pval = pval, ci.lb = ci.lb, ci.ub = ci.ub, formula = formula)
 
   } else {
     treeframe <- prunedtree$frame
@@ -71,11 +72,17 @@ FEmrt <- function(formula, vi, data, c = 1) {
     pval <- pnorm(abs(zval),lower.tail=FALSE)*2
     ci.lb <- g - qnorm(0.975)*se
     ci.ub <- g + qnorm(0.975)*se
-    res <- list(tree =  prunedtree, no. = no., Qb = Qb, df = df, pval.Qb = pval.Qb,
+    mod.names <- levels(prunedtree$frame$var)[levels(prunedtree$frame$var) != "<leaf>"]
+    labs <- sapply(1:length(mod.names), function(x)
+      tapply(t(data[mod.names[x]]), prunedtree$where, function(x)(paste(unique(x), collapse = "/")) ))
+    colnames(labs) = mod.names  # only for categorical variables
+    res <- list(tree =  prunedtree,  labs = labs, no. = no., Qb = Qb, df = df, pval.Qb = pval.Qb,
                 Qw = Qw, g = g, se = se, zval =zval, pval = pval, ci.lb = ci.lb,
-                ci.ub = ci.ub)
+                ci.ub = ci.ub, formula = formula)
+
   }
   class(res) <- "FEmrt"
+  remove(vi, envir = .GlobalEnv)
   res
 }
 
@@ -89,7 +96,7 @@ print.FEmrt <- function(x, digits = 3){
       cat("Fixed effects meta-regression tree (K = ", sum(x$no.), " studies); ",
           sep = "")
       cat("\n")
-      cat("formula = ",deparse(formula))
+      cat("formula = ",deparse(x$formula))
       cat("\n")
       cat("No moderator effect was detected" )
       cat("\n\n")
@@ -115,9 +122,11 @@ print.FEmrt <- function(x, digits = 3){
       cat("Fixed effects meta-regression tree (K = ", sum(x$no.), " studies); ",
           sep = "")
       cat("\n")
-      cat("formula = ",deparse(formula))
+      cat("formula = ",deparse(x$formula))
       cat("\n")
       cat("A tree with ", length(x$no.), " terminal nodes was detected", sep="" )
+      cat("\n")
+      cat("Moderators were detected as: ", paste(colnames(x$labs), collapse = ", "), sep="")
       cat("\n\n")
       cat("Test for Between-Subgroups Heterogeneity:")
       cat("\n")
@@ -129,17 +138,19 @@ print.FEmrt <- function(x, digits = 3){
       cat("\n")
       sig <- symnum(x$pval, corr = FALSE, na = FALSE, cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
                     symbols = c("***", "**", "*", ".", " "))
-      res.table <- cbind(x$no.,
+      res.table <- cbind(x$labs, x$no.,
                      formatC(cbind(x$Qw, x$g, x$se, x$zval, x$pval, x$ci.lb, x$ci.ub), digits, format = "f"),
                      sig)
-      colnames(res.table) <- c("K", "Qw", "g", "se", "zval",  "pval",
+      colnames(res.table) <- c(colnames(x$labs), "K", "Qw", "g", "se", "zval",  "pval",
                                "ci.lb", "ci.ub", " ")
+      print(res.table, quote = FALSE, right = TRUE)
+      cat("---\nSignif. codes: ", attr(sig, "legend"), "\n\n")
       }
 
   }
 }
 
 #' @export
-plot.FEmrt <- function(x, type=2){
+plot.FEmrt <- function(x, type=4){
   prp(x$tree)
 }
