@@ -1,7 +1,10 @@
 
-require(rpart)
-require(rpart.plot)
-#' @export
+#' Prune a tree
+#'
+#' Prune an initial rpart tree by "c-standard-error" rule.
+#' @param tree: A initial tree fitted by rpart, needs to an rpart object.
+#' @param c: A scalar to prune the  tree by selecting the tree with minum cross-validation error plus the standard error multiplied by c.
+#' @return The pruned tree, also an rpart object.
 treepruner <- function(tree, c){
   # function that prunes a CART with c-SE prunign rule
   #
@@ -20,6 +23,46 @@ treepruner <- function(tree, c){
   prune(tree, cp=cp.take)  # prune the tree
 }
 
+#' Fixed effects meta-regression tree
+#'
+#' Apply fixed effects meta-regression trees to meta-analytic data sets.
+#' Note that the model is assuming fixed effects within and between subgroups.
+#' In other words, it is assumed that no residual heterogeneity is present.
+#' @param formula: A formula to specify the response variable (usually the effect size) and the interested moderators. It should be written like y ~ x1 + x2.
+#' @param vi: The name of the column of the sampling variance of each study in the data set.
+#' @param data: A meta-analytic data set. Needs to be a data frame.
+#' @param c: The pruning parameter to prune the initial regression tree by "c-standard-error" rule. Needs to be a non-negative scalar.
+#' @return If no moderator effect is detected, the function will perform a standard meta-analysis and return a list including the following objects:
+#' @return no.: The total number of the studies
+#' @return Q: The Q-statistics for the heterogeneity test
+#' @return df: The degree of freedoms of the heterogeneity test
+#' @return pval.Q: The p-value of the heterogeneity test
+#' @return g: The overall effect size for all studies, based on Hedges'g
+#' @return se: The standard error of the overall effect size
+#' @return zval: The Z value of the z-test
+#' @return pval: The p-value of the significance test for the overall effect size
+#' @return ci.lb: The lower bound of the confidence interval for the overall effect size
+#' @return ci.ub: The upper bound of the confidence interval for the overall effect size
+#' @return formula: The formula that was specified in the model
+#' @return If  moderator effect(s) is(are) detected, the function will perform a subgroup meta-analysis and return a list including the following objects:
+#' @return tree: The tree that represents the moderator effects and interaction effects between the moderators. An rpart object.
+#' @return labs: A data frame showing how the studies were split by the moderators into subgroups
+#' @return no.: The number of the studies in each subgroup
+#' @return Qb: The between-subgroups Q-statistics
+#' @return df: The degree of freedoms of the test for between-subgroups heterogeneity
+#' @return pval.Qb: The p-value of the test for between-subgroups heterogeneity
+#' @return Qw: The within-subgroup Q-statistic in each subgroup
+#' @return g: The overall effect size in each subgroup, based on Hedges'g
+#' @return se: The standard error of each overall effect size
+#' @return zval: The Z value of the z-test for each overall effect size
+#' @return pval: The p-value of the significance test for the overall effect size of each group
+#' @return ci.lb: The lower bounds of the confidence intervals
+#' @return ci.ub: The upper bounds of the confidence intervals
+#' @return formula: The formula that was specified in the model
+#' @examples data(SimData)
+#' test <- FEmrt(efk~m1+m2+m3+m4+m5, vark, data=fake.dat, c=0)
+#' test
+#' plot(test)
 #' @export
 FEmrt <- function(formula, vi, data, c = 1) {
   # function that applies fixed effects meta-CART algorithms to data set
@@ -55,7 +98,7 @@ FEmrt <- function(formula, vi, data, c = 1) {
     ci.lb <- g - qnorm(0.975)*se
     ci.ub <- g + qnorm(0.975)*se
 
-    res <- list(tree =  prunedtree, no. = no. ,  Q = Q,
+    res <- list(no. = no. ,  Q = Q,
                 df = df, pval.Q = pval.Q, g = g, se = se, zval = zval,
                 pval = pval, ci.lb = ci.lb, ci.ub = ci.ub, formula = formula)
 
@@ -86,6 +129,17 @@ FEmrt <- function(formula, vi, data, c = 1) {
   res
 }
 
+#' Pinrt function for FEmrt
+#'
+#' Print out the results of an FEmrt object
+#'
+#' @usage ## S3 method for class "FEmrt"
+#' print(x, digits = 3)
+#' @details If no moderator effect is detected,
+#' the print function will show the standard meta-analysis results.
+#' Otherwise, the print function will show the subgroup meta-analysis results,
+#' with the significance test resutls for moderator effects, the splitting points of the moderators,
+#' and the estimated effect sizes in all subgroups.
 #' @export
 print.FEmrt <- function(x, digits = 3){
   if (!is.element("FEmrt", class(x))) {
@@ -150,6 +204,15 @@ print.FEmrt <- function(x, digits = 3){
   }
 }
 
+#' Visualisation of Fixed Effects Meta-Regression Tree
+#'
+#' Plot function for an FEmrt object. The plot function uses the plot method from the package rpart.plot
+#'  of Stephen Milborrow. The plots shows the result of fixed effects meta-regression tree with subgroups
+#'  split by moderators and the corresponding estimated overall effect sizes.
+#' @param x: A FEmrt object.
+#' @param type:
+#' @usage ## S3 method for class "FEmrt"
+#' plot(x, type=4)
 #' @export
 plot.FEmrt <- function(x, type=4){
   prp(x$tree)

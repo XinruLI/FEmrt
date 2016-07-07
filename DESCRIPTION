@@ -1,9 +1,12 @@
 Package: FEmrtPkg
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Fixed Effects Meta-Regression Trees
 Version: 0.1
 Date: 2016-07-05
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Authors: Xinru Li, Elise Dusseldorp, Jacqueline Meulman
+Maintainer: Xinru Li <x.li@math.leidenuniv.nl>
+Description: The package can be used to apply fixed effects meta-regression
+    trees to meta-analytic data sets
+License: GPL-2 | GPL-3
 LazyData: TRUE
+RoxygenNote: 5.0.1
