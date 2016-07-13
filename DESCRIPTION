@@ -1,4 +1,4 @@
-Package: FEmrtPkg
+Package: metacart
 Type: Package
 Title: Fixed Effects Meta-Regression Trees
 Version: 0.1

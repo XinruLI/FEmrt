@@ -3,3 +3,4 @@
 S3method(plot,FEmrt)
 S3method(print,FEmrt)
 export(FEmrt)
+import(rpart,rpart.plot)

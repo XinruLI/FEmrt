@@ -77,7 +77,7 @@ In other words, it is assumed that no residual heterogeneity is present.
 }
 \examples{
 data(SimData)
-test <- FEmrt(efk~m1+m2+m3+m4+m5, vark, data=fake.dat, c=0)
+test <- FEmrt(efk~m1+m2+m3+m4+m5, vark, data=SimData, c=0)
 test
 plot(test)
 }

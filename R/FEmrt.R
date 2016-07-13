@@ -60,7 +60,7 @@ treepruner <- function(tree, c){
 #' @return ci.ub: The upper bounds of the confidence intervals
 #' @return formula: The formula that was specified in the model
 #' @examples data(SimData)
-#' test <- FEmrt(efk~m1+m2+m3+m4+m5, vark, data=fake.dat, c=0)
+#' test <- FEmrt(efk~m1+m2+m3+m4+m5, vark, data=SimData, c=0)
 #' test
 #' plot(test)
 #' @export
