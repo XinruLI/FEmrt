@@ -1,42 +1,14 @@
-
-#' Prune a tree
+#' Fixed effects meta-classification tree
 #'
-#' Prune an initial rpart tree by "c-standard-error" rule.
-#' @param tree: A initial tree fitted by rpart, needs to an rpart object.
-#' @param c: A scalar to prune the  tree by selecting the tree with minum cross-validation error plus the standard error multiplied by c.
-#' @return The pruned tree, also an rpart object.
-treepruner <- function(tree, c){
-  # function that prunes a CART with c-SE prunign rule
-  #
-  # Argument:
-  #  tree: a classification tree or a regression tree fit by rpart
-  #     c: the pruning parameter, needs to be a scalar
-  #
-  # Returns:
-  # a pruned tree
-  tree <- tree
-  c <- c
-  mindex <- which.min(tree$cptable[,4])  # find the row of the minimum x-error
-  cp.minse <- tree$cptable[mindex,4] + c*tree$cptable[mindex,5]  # the minimum x-error + c*SE
-  cp.row <- min(which(tree$cptable[,4]<= cp.minse))  # find the smallest tree within the minimum x-error + c*SE
-  cp.take <- tree$cptable[cp.row, 1]  # get the cp value for the smallest tree
-  prune(tree, cp=cp.take)  # prune the tree
-}
-
-#' Fixed effects meta-regression tree
-#'
-#' A function to fit fixed effects meta-regression trees to meta-analytic data.
-#' Note that the model is assuming fixed effects within and between subgroups.
+#' Function to fit fixed effects meta-classification trees to meta-analytic data. Note that
+#' The model is assuming fixed effects within and between subgroups.
+#' Note that meta-classifcation trees may result in spurious splits, and have lower performance comparing to
+#' meta-regression trees. See in the documentation of the metacart-package for more details.
 #'
 #' @param formula: A formula, with a response variable (usually the effect size) and the interested moderators but no interaction terms.
 #' @param vi: The column name of the sampling variance in the data set.
 #' @param data: A data frame of a meta-analytic data set, including the effect sizes, sampling variance, and the potential moderators.
-#' @param c: A non-negative scalar.The pruning parameter to prune the initial regression tree by "c-standard-error" rule.
-#' @return If no moderator effect is detected, the function will return a list including the following objects:
-#' @param formula: A formula, with a response variable (usually the effect size) and the interested moderators but no interaction terms.
-#' @param vi: The column name of the sampling variance in the data set.
-#' @param data: A data frame of a meta-analytic data set, including the effect sizes, sampling variance, and the potential moderators.
-#' @param c: A non-negative scalar.The pruning parameter to prune the initial regression tree by "c-standard-error" rule.
+#' @param c: A non-negative scalar.The pruning parameter to prune the initial classification tree by "c-standard-error" rule.
 #' @return If no moderator effect is detected, the function will return a list containing the following objects:
 #' @return no.: The total number of the studies
 #' @return Q: The Q-statistics of the heterogeneity test
@@ -66,11 +38,11 @@ treepruner <- function(tree, c){
 #' @return call: The matched call
 #' @return type: The type of the tree
 #' @examples data(SimData)
-#' test <- FEmrt(efk~m1+m2+m3+m4+m5, vark, data=SimData, c=1)
+#' test <- FEmct(efk~m1+m2+m3+m4+m5, vark, data=SimData, c=0)
 #' test
 #' plot(test)
 #' @export
-FEmrt <- function(formula, vi, data, c = 1, control = rpart.control(xval=10,minbucket=5,minsplit=10,cp=0.0001)) {
+FEmct <- function(formula, vi, data, c = 0, control = rpart.control(xval=10,minbucket=5,minsplit=10,cp=0.0001)) {
   # function that applies fixed effects meta-CART algorithms to data set
   #
   # Argument:
@@ -81,24 +53,26 @@ FEmrt <- function(formula, vi, data, c = 1, control = rpart.control(xval=10,minb
   #
   # Returns:
   # a list contains the pruned tree, and the resutls of subgroup meta-analysis
+  data <- as.data.frame(data)
   mf <- match.call()
   mf.vi <- mf[[match("vi", names(mf))]]
   vi <- eval(mf.vi, data, enclos = sys.frame(sys.parent()))
-  assign("vi.FEmrt.temp", vi, envir = .GlobalEnv)
+  assign("vi.femct.temp", vi, envir = .GlobalEnv)
   formula <- as.formula(formula)
-  data <- as.data.frame(data)
-  tree <- rpart(formula, weights = 1/vi.FEmrt.temp, data = data, control = control)
-  prunedtree <- treepruner(tree, c*sqrt(mean(1/vi.FEmrt.temp)))
+  mf.y <- data[deparse(formula[[2]])][,1]
+  data$dich <- (mf.y >= (sum(mf.y/vi.femct.temp)/sum(1/vi.femct.temp)))*1
+  formula[[2]] <- as.name("dich")
+  tree <- rpart(formula, weights = (length(vi.femct.temp)/vi.femct.temp)/sum(1/vi.femct.temp), method = "class", data = data, control = control)
+  prunedtree <- treepruner(tree, c)
 
   if (length(unique(prunedtree$where)) < 2) {
     warning("no moderator effect was detected")
-    y <- model.response(model.frame(formula, data))
-    no. <- length(y)
-    g <- sum(y/vi.FEmrt.temp)/sum(1/vi.FEmrt.temp)
-    Q <- sum((y-g)^2/vi.FEmrt.temp)
+    no. <- length(mf.y)
+    g <- sum(mf.y/vi.femct.temp)/sum(1/vi.femct.temp)
+    Q <- sum((mf.y-g)^2/vi.femct.temp)
     df <- no. - 1
     pval.Q <- pchisq(Q, df, lower.tail = FALSE)
-    se <- 1/sqrt(sum(1/vi.FEmrt.temp))
+    se <- 1/sqrt(sum(1/vi.femct.temp))
     zval <- g/se
     pval <- pnorm(abs(zval),lower.tail=FALSE)*2
     ci.lb <- g - qnorm(0.975)*se
@@ -106,17 +80,20 @@ FEmrt <- function(formula, vi, data, c = 1, control = rpart.control(xval=10,minb
 
     res <- list(no. = no. ,  Q = Q,
                 df = df, pval.Q = pval.Q, g = g, se = se, zval = zval,
-                pval = pval, ci.lb = ci.lb, ci.ub = ci.ub, call = mf, type="Regression")
+                pval = pval, ci.lb = ci.lb, ci.ub = ci.ub, call = mf, type="Classification")
 
   } else {
-    treeframe <- prunedtree$frame
-    no. <- treeframe[treeframe$var == "<leaf>", 2]
-    Qw <- treeframe[treeframe$var == "<leaf>", 4]
-    g <- treeframe[treeframe$var == "<leaf>", 5]
-    Qb <- treeframe[1,4] - sum(Qw)
+    no. <- table(prunedtree$where)
+    g <- tapply(mf.y/vi.femct.temp,
+                prunedtree$where, sum)/tapply(1/vi.femct.temp,
+                                              prunedtree$where, sum)
+    gt <- sum(mf.y/vi.femct.temp)/sum(1/vi.femct.temp)
+    Qt <- sum((mf.y-gt)^2/vi.femct.temp)
+    Qw <- tapply((mf.y - g[as.character(prunedtree$where)])^2/vi.femct.temp, prunedtree$where, sum )
+    Qb <- Qt - sum(Qw)
     df <- length(unique(prunedtree$where))-1
     pval.Qb <- pchisq(Qb, df, lower.tail = FALSE)
-    se <- tapply(vi.FEmrt.temp, prunedtree$where, function(x) sqrt(1/sum(1/x)))
+    se <- tapply(vi.femct.temp, prunedtree$where, function(x) sqrt(1/sum(1/x)))
     zval <- g/se
     pval <- pnorm(abs(zval),lower.tail=FALSE)*2
     ci.lb <- g - qnorm(0.975)*se
@@ -127,10 +104,11 @@ FEmrt <- function(formula, vi, data, c = 1, control = rpart.control(xval=10,minb
     colnames(labs) = mod.names  # only for categorical variables
     res <- list(tree =  prunedtree,  labs = labs, no. = no., Qb = Qb, df = df, pval.Qb = pval.Qb,
                 Qw = Qw, g = g, se = se, zval =zval, pval = pval, ci.lb = ci.lb,
-                ci.ub = ci.ub, call = mf, type = "Regression")
+                ci.ub = ci.ub, call = mf, type = "Classification")
 
   }
   class(res) <- "metacart"
-  remove(vi.FEmrt.temp, envir = .GlobalEnv)
+  remove(vi.femct.temp, envir = .GlobalEnv)
   res
 }
+

@@ -15,9 +15,9 @@
 data(SimData)
 }
 \description{
-Data simuated from a true model with a three-way interaction between
-moderators m1, m2 and m3. Only the studies with these three moderators all as "B"
-have positive effect sizes with a true value as 0.8.
+Data simuated from a true model with a three-way interaction between three
+moderators: m1, m2 and m3. If the values of the three moderators are all "B"s
+the ture effect size will be 0.80. Otherwise, the true effect size is 0.
 }
 \keyword{datasets}
 
