@@ -1,14 +1,8 @@
 Package: metacart
 Type: Package
 Title: Fixed Effects Meta-Classification and -Regression Trees
-Version: 0.1
+Version: 0.5
 Date: 2016-07-05
-Authors@R: c(person(given = "Xinru", family = "Li", role = c("aut", "cre"),
-email = ("x.li@math.leidenuniv.nl")),
-person(given = "Elise", family = "Dusseldorp", role =
-        c("aut", "cre","cph"), email = "elise.dusseldorp@fsw.leidenuniv.nl"),
-person(given = "Jacqueline", family = "Meulman", role=c("aut"),
-email = " jmeulman@math.leidenuniv.nl"))
 Maintainer: Xinru Li <x.li@math.leidenuniv.nl>
 URL: http://www.elisedusseldorp.nl/pdf/Dusseldorp2014_HPMetaCART.pdf
 Description: Fits fixed effects meta-classification and -regression
@@ -19,3 +13,5 @@ Author: Xinru Li [aut, cre], Elise Dusseldorp [aut, cre, cph], Jacqueline Meulma
 License: GPL-2 | GPL-3
 LazyData: TRUE
 RoxygenNote: 5.0.1
+Authors@R: c(person(given = "Xinru", family = "Li", role = c("aut", "cre"),email = ("x.li@math.leidenuniv.nl")),person(given = "Elise", family = "Dusseldorp", role = c("aut", "cre","cph"), email = "elise.dusseldorp@fsw.leidenuniv.nl"),person(given = "Jacqueline", family = "Meulman", role=c("aut"),email = " jmeulman@math.leidenuniv.nl"))
+

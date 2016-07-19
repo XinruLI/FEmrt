@@ -4,7 +4,9 @@
 \alias{FEmct}
 \title{Fixed effects meta-classification tree}
 \usage{
-FEmct(formula, vi, data, c = 0)
+FEmct(formula, vi, data, c = 0, dich.value = NULL,
+  control = rpart.control(xval = 10, minbucket = 5, minsplit = 10, cp =
+  1e-04))
 }
 \arguments{
 \item{formula:}{A formula, with a response variable (usually the effect size) and the interested moderators but no interaction terms.}

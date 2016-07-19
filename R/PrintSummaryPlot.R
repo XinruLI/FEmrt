@@ -85,7 +85,8 @@ summary.metacart <- function(x, digits = 3){
 #' plot(x)
 #' @export
 plot.metacart <- function(x){
-  prp(x$tree,type=4)
+  if (length(x$no.) < 2) {stop("no tree was detected")}
+  else {prp(x$tree,type=4)}
 }
 
 #' Print function for metacart

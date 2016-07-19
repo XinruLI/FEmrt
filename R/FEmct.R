@@ -42,7 +42,7 @@
 #' test
 #' plot(test)
 #' @export
-FEmct <- function(formula, vi, data, c = 0, control = rpart.control(xval=10,minbucket=5,minsplit=10,cp=0.0001)) {
+FEmct <- function(formula, vi, data, c = 0, dich.value = NULL, control = rpart.control(xval=10,minbucket=5,minsplit=10,cp=0.0001)) {
   # function that applies fixed effects meta-CART algorithms to data set
   #
   # Argument:
@@ -60,7 +60,13 @@ FEmct <- function(formula, vi, data, c = 0, control = rpart.control(xval=10,minb
   assign("vi.femct.temp", vi, envir = .GlobalEnv)
   formula <- as.formula(formula)
   mf.y <- data[deparse(formula[[2]])][,1]
-  data$dich <- (mf.y >= (sum(mf.y/vi.femct.temp)/sum(1/vi.femct.temp)))*1
+  if (is.null(dich.value)) {
+    data$dich <- (mf.y >= (sum(mf.y/vi.femct.temp)/sum(1/vi.femct.temp)))*1
+  } else {
+    if (!is.numeric(dich.value)) {stop("dich.value needs to be a scalar")}
+    else {data$dich <- ifelse(mf.y >= dich.value, 1, 0)}
+  }
+
   formula[[2]] <- as.name("dich")
   tree <- rpart(formula, weights = (length(vi.femct.temp)/vi.femct.temp)/sum(1/vi.femct.temp), method = "class", data = data, control = control)
   prunedtree <- treepruner(tree, c)

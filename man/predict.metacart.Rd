@@ -13,7 +13,7 @@ predict(x, newdata)
 \item{newdata:}{data frame containing the values at which predictions are required.}
 }
 \value{
-A data frame containing the predicted effect size and the predictors.
+A data frame containing the predicted effect size, the moderators, and the corresponding node lables in the fitted tree.
 }
 \description{
 Returns a data frame of predicted effect sizes and moderators from a fitted metacart object

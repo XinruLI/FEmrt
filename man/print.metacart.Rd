@@ -2,19 +2,15 @@
 % Please edit documentation in R/PrintSummaryPlot.R
 \name{print.metacart}
 \alias{print.metacart}
-\title{Pinrt function for metacart}
+\title{Print function for metacart}
 \usage{
 ## S3 method for class "metacart"
-print(x, digits = 3)
+print(x)
 }
 \description{
-Print out the results of an metacart object
+Print the results of an metacart object
 }
 \details{
-If no moderator effect is detected,
-the print function will show the standard meta-analysis results.
-Otherwise, the print function will show the subgroup meta-analysis results,
-with the significance test resutls for moderator effects, the splitting points of the moderators,
-and the estimated subgroup overall effect sizes.
+The function returns the objects concerning the analysis results.
 }
 

@@ -4,7 +4,8 @@
 \alias{FEmrt}
 \title{Fixed effects meta-regression tree}
 \usage{
-FEmrt(formula, vi, data, c = 1)
+FEmrt(formula, vi, data, c = 1, control = rpart.control(xval = 10, minbucket
+  = 5, minsplit = 10, cp = 1e-04))
 }
 \arguments{
 \item{formula:}{A formula, with a response variable (usually the effect size) and the interested moderators but no interaction terms.}

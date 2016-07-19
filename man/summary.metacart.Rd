@@ -5,12 +5,16 @@
 \title{Summary function for metacart}
 \usage{
 ## S3 method for class "metacart"
-summary(x)
+print(x, digits = 3)
 }
 \description{
 Summary the results of an metacart object
 }
 \details{
-The function gives summary of the analysis results and details of all return values.
+If no moderator effect is detected,
+the summary function will show the standard meta-analysis results.
+Otherwise, the summary function will show the subgroup meta-analysis results,
+with the significance test resutls for moderator effects, the splitting points of the moderators,
+and the estimated subgroup overall effect sizes.
 }
 
